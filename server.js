@@ -48,9 +48,46 @@ const HEAD = '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
   '<meta name="robots" content="noindex,nofollow">' +
   '<style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body>';
 
+// 공유 링크: /s/<토큰>/ → 해당 행사 페이지만 로그인 없이 보기 (토큰 목록: shares.json, 외부로 내보내지 않음)
+function shareTarget(token) {
+  try {
+    const list = JSON.parse(fs.readFileSync(path.join(ROOT, 'shares.json'), 'utf8'));
+    const hit = list.find(x => x.token === token && x.active !== false);
+    return hit && new RegExp(`^${SLUG}$`).test(hit.slug) ? hit.slug : null;
+  } catch { return null; }
+}
+const SHARE_FILES = [/^index\.html$/, /^images\/(products\/)?[\w.-]+\.(jpe?g|png|webp)$/];
+
+function send(res, file, rel) {
+  fs.readFile(file, (err, buf) => {
+    if (err) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); return res.end('없는 페이지입니다.'); }
+    const type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
+    res.setHeader('Cache-Control', 'private, no-cache');
+    res.writeHead(200, {'Content-Type': type});
+    res.end(isPage(rel) ? HEAD + buf.toString('utf8') + '</body></html>' : buf);
+  });
+}
+const notFound = res => { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); res.end('없는 페이지입니다.'); };
+
 http.createServer((req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  let rel;
+  try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, ''); }
+  catch { res.writeHead(400); return res.end(); }
+
+  const sm = rel.match(/^s\/([A-Za-z0-9_-]{16,64})(\/.*)?$/);
+  if (sm) {
+    const slug = shareTarget(sm[1]);
+    if (!slug) return notFound(res);
+    if (sm[2] === undefined) { res.writeHead(301, {Location: '/s/' + sm[1] + '/'}); return res.end(); }
+    let sub = sm[2].slice(1);
+    if (sub === '') sub = 'index.html';
+    if (sub.includes('..') || !SHARE_FILES.some(p => p.test(sub))) return notFound(res);
+    return send(res, path.join(ROOT, 'events', slug, sub), sub);
+  }
+
   if (!USER || !PASS) {
     res.writeHead(503, {'Content-Type': 'text/plain; charset=utf-8'});
     return res.end('비밀번호가 설정되지 않았습니다. Railway Variables에 BASIC_AUTH_USER, BASIC_AUTH_PASSWORD를 넣어주세요.');
@@ -59,18 +96,8 @@ http.createServer((req, res) => {
     res.writeHead(401, {'WWW-Authenticate': 'Basic realm="FootJoy Jamsil", charset="UTF-8"', 'Content-Type': 'text/plain; charset=utf-8'});
     return res.end('로그인이 필요합니다.');
   }
-  let rel;
-  try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, ''); }
-  catch { res.writeHead(400); return res.end(); }
   if (new RegExp(`^events/${SLUG}$`).test(rel)) { res.writeHead(301, {Location: '/' + rel + '/'}); return res.end(); }
   if (rel === '' || rel.endsWith('/')) rel += 'index.html';
-  if (rel.includes('..') || !allowed(rel)) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); return res.end('없는 페이지입니다.'); }
-  const file = path.join(ROOT, rel);
-  fs.readFile(file, (err, buf) => {
-    if (err) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); return res.end('없는 페이지입니다.'); }
-    const type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    res.setHeader('Cache-Control', 'private, no-cache');
-    res.writeHead(200, {'Content-Type': type});
-    res.end(isPage(rel) ? HEAD + buf.toString('utf8') + '</body></html>' : buf);
-  });
+  if (rel.includes('..') || !allowed(rel)) return notFound(res);
+  send(res, path.join(ROOT, rel), rel);
 }).listen(PORT, () => console.log('listening on ' + PORT + (USER && PASS ? ` · 로그인 설정됨 (아이디 ${USER.length}자, 비밀번호 ${PASS.length}자)` : ' · 비밀번호 미설정')));

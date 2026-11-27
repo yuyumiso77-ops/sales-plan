@@ -512,7 +512,9 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
 
 /* 탭 */
 if (location.pathname.startsWith('/events/')) $('back').hidden = false;
-const tabs = ['plan','items','summary','golf','mail'];
+const SHARED = location.pathname.startsWith('/s/');
+if (SHARED) { document.querySelector('[data-tab="mail"]').remove(); $('v-mail').remove(); }
+const tabs = SHARED ? ['plan','items','summary','golf'] : ['plan','items','summary','golf','mail'];
 /* 골프화 */
 (function(){
   const models = []; const by = {};
@@ -534,7 +536,7 @@ const tabs = ['plan','items','summary','golf','mail'];
   document.querySelectorAll('[data-gsx]').forEach(b=>b.addEventListener('click',()=>{gsx=b.dataset.gsx;document.querySelectorAll('[data-gsx]').forEach(x=>x.setAttribute('aria-pressed',x===b));render();}));
   render();
 })();
-$('copy-mail').addEventListener('click', () => {
+$('copy-mail') && $('copy-mail').addEventListener('click', () => {
   const txt = $('mail-text').textContent, msg = $('copy-msg');
   const sel = () => { const r = document.createRange(); r.selectNodeContents($('mail-text')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = '본문을 선택했습니다. Ctrl+C로 복사하세요.'; };
   try { navigator.clipboard.writeText(txt).then(() => { msg.textContent = '복사했습니다.'; }, sel); } catch (e) { sel(); }
