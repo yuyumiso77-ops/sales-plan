@@ -11,15 +11,23 @@ const PORT = process.env.PORT || 3000;
 const clean = v => (v || '').trim().replace(/^(["'])(.*)\1$/, '$2');
 const USER = clean(process.env.BASIC_AUTH_USER);
 const PASS = clean(process.env.BASIC_AUTH_PASSWORD);
-const PAGE = 'footjoy-jamsil-popup.html';
+// 구조: index.html(대시보드) · events.json(행사 목록) · events/<행사>/index.html · images/ · 엑셀
 
 const TYPES = {
-  '.html': 'text/html; charset=utf-8',
+  '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp',
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 };
 // 공개할 파일만 허용 (서버 코드 등은 내보내지 않음)
-const allowed = rel => rel === PAGE || /^images\/(products\/)?[\w.-]+\.(jpe?g|png|webp)$/.test(rel) || /^[^/]+\.xlsx$/.test(rel);
+const SLUG = '[a-z0-9][a-z0-9-]*';
+const PATTERNS = [
+  /^index\.html$/, /^events\.json$/,
+  new RegExp(`^events/${SLUG}/index\\.html$`),
+  new RegExp(`^events/${SLUG}/images/(products/)?[\\w.-]+\\.(jpe?g|png|webp)$`),
+  new RegExp(`^events/${SLUG}/[^/]+\\.xlsx$`),
+];
+const allowed = rel => PATTERNS.some(p => p.test(rel));
+const isPage = rel => rel.endsWith('.html');
 
 const same = (a, b) => {
   const x = Buffer.from(a), y = Buffer.from(b);
@@ -54,7 +62,8 @@ http.createServer((req, res) => {
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, ''); }
   catch { res.writeHead(400); return res.end(); }
-  if (rel === '' || rel === 'index.html') rel = PAGE;
+  if (new RegExp(`^events/${SLUG}$`).test(rel)) { res.writeHead(301, {Location: '/' + rel + '/'}); return res.end(); }
+  if (rel === '' || rel.endsWith('/')) rel += 'index.html';
   if (rel.includes('..') || !allowed(rel)) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); return res.end('없는 페이지입니다.'); }
   const file = path.join(ROOT, rel);
   fs.readFile(file, (err, buf) => {
@@ -62,6 +71,6 @@ http.createServer((req, res) => {
     const type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
     res.setHeader('Cache-Control', 'private, no-cache');
     res.writeHead(200, {'Content-Type': type});
-    res.end(rel === PAGE ? HEAD + buf.toString('utf8') + '</body></html>' : buf);
+    res.end(isPage(rel) ? HEAD + buf.toString('utf8') + '</body></html>' : buf);
   });
 }).listen(PORT, () => console.log('listening on ' + PORT + (USER && PASS ? ` · 로그인 설정됨 (아이디 ${USER.length}자, 비밀번호 ${PASS.length}자)` : ' · 비밀번호 미설정')));
