@@ -174,12 +174,12 @@ a.btn{text-decoration:none}
     </div>
     <h2>대표 상품</h2>
     <div class="panel tbl"><table id="t-rep"></table></div>
-    <p class="note">2025년 상품 중 대표 5개 품번입니다. 컬러별 사진은 아래 "대표상품 이미지컷"에서 첨부한 사진이 자동으로 표시되고, 점선 칸은 아직 사진이 없는 컬러입니다.</p>
+    <p class="note" id="rep-note">2025년 상품 중 대표 5개 품번입니다. 컬러별 사진은 아래 "대표상품 이미지컷"에서 첨부한 사진이 자동으로 표시되고, 점선 칸은 아직 사진이 없는 컬러입니다.</p>
     <h2>골프화 대표 상품</h2>
     <div class="panel tbl"><table id="t-grep"></table></div>
-    <p class="note">성별별 배분수량·할인가합계 1위 모델입니다. 사진은 아래 "대표상품 이미지컷"에서 해당 모델을 골라 첨부하면 표시됩니다.</p>
+    <p class="note" id="grep-note">성별별 배분수량·할인가합계 1위 모델입니다. 사진은 아래 "대표상품 이미지컷"에서 해당 모델을 골라 첨부하면 표시됩니다.</p>
     <h2 id="attach">이미지컷 · 첨부</h2>
-    <p class="note" id="att-status" role="status">첨부 기능을 불러오는 중입니다.</p>
+    <p class="note" id="att-status" role="status"></p>
 
     <div class="att-head"><h3>메인 이미지컷 <span class="sub">800×800</span></h3>
       <div class="att-ctl" data-kind="main" hidden>
@@ -197,7 +197,7 @@ a.btn{text-decoration:none}
       </div></div>
     <div class="gallery products" id="g-prod">
     </div>
-    <p class="note">파일명에 번호가 있으면(예: FJ_39900_sw.png) 품번·컬러를 자동으로 찾아 연결합니다. 올린 사진은 가운데를 기준으로 800×800 정사각형으로 자동으로 맞춰 저장되고, 투명한 배경은 흰색으로 바뀝니다.</p>
+    <p class="note" id="att-note">파일명에 번호가 있으면(예: FJ_39900_sw.png) 품번·컬러를 자동으로 찾아 연결합니다. 올린 사진은 가운데를 기준으로 800×800 정사각형으로 자동으로 맞춰 저장되고, 투명한 배경은 흰색으로 바뀝니다.</p>
 
     <div class="att-head"><h3>LMS 단독컷 <span class="sub">800×400</span></h3></div>
     <div class="gallery">
@@ -424,7 +424,7 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
     im.src = a.url || ('/_blob/' + a.asset); im.alt = (a.kind==='main'?'첨부 메인컷':'첨부 상품컷') + (a.code ? ' ' + a.code : '');
     im.width = 800; im.height = 800; im.loading = 'lazy';
     im.onerror = () => { const p = document.createElement('div'); p.className = 'ph'; p.textContent = '이미지를 불러올 수 없습니다'; im.replaceWith(p); };
-    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = a.pending ? '올리는 중' : '첨부';
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = a.pending ? '올리는 중' : '첨부'; if (a.isStatic) tag.hidden = true;
     const cap = document.createElement('figcaption');
     const shoe = a.code && /^\d{5}$/.test(a.code) ? SH.find(x => String(x.model) === a.code) : null;
     cap.textContent = shoe ? `골프화 ${a.code} · ${shoe.name}` : a.kind === 'product' && a.code ? a.code + (a.color ? ' · ' + a.color : '') + (pname(a.code) ? ' · ' + pname(a.code) : '') : (a.name || '');
@@ -507,7 +507,7 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
 
   async function start(){
     render();
-    const useStatic = msg => { ATT = STATIC_PROD.filter(a => REP.includes(a.code) || GREP.some(([,m]) => String(m) === a.code)); render(); say(msg); };
+    const useStatic = msg => { ATT = STATIC_PROD.filter(a => REP.includes(a.code) || GREP.some(([,m]) => String(m) === a.code)).map(a => ({...a, isStatic: true})); render(); status.hidden = true; $('att-note').hidden = true; $('attach').textContent = '이미지컷'; $('rep-note').textContent = '2025년 상품 중 대표 5개 품번입니다. 컬러별 사진입니다.'; $('grep-note').textContent = '성별별 배분수량·할인가합계 1위 모델입니다. 할인가는 균일가입니다.'; };
     if (!window.claude || !window.claude.use) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 사진 첨부는 claude.ai 페이지에서 할 수 있습니다.'); return; }
     const db = await window.claude.use('db');
     if (!db) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 로그인하면 첨부한 사진도 볼 수 있습니다.'); return; }
