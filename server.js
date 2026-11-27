@@ -7,8 +7,10 @@ const crypto = require('crypto');
 
 const ROOT = __dirname;
 const PORT = process.env.PORT || 3000;
-const USER = process.env.BASIC_AUTH_USER || '';
-const PASS = process.env.BASIC_AUTH_PASSWORD || '';
+// 앞뒤 공백·줄바꿈과 값 전체를 감싼 따옴표는 실수로 들어가는 경우가 많아 제거
+const clean = v => (v || '').trim().replace(/^(["'])(.*)\1$/, '$2');
+const USER = clean(process.env.BASIC_AUTH_USER);
+const PASS = clean(process.env.BASIC_AUTH_PASSWORD);
 const PAGE = 'footjoy-jamsil-popup.html';
 
 const TYPES = {
@@ -30,7 +32,7 @@ function authorized(req) {
   const raw = Buffer.from(h.slice(6), 'base64').toString('utf8');
   const i = raw.indexOf(':');
   if (i < 0) return false;
-  return same(raw.slice(0, i), USER) && same(raw.slice(i + 1), PASS);
+  return same(raw.slice(0, i).trim(), USER) && same(raw.slice(i + 1), PASS);
 }
 
 const HEAD = '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
@@ -62,4 +64,4 @@ http.createServer((req, res) => {
     res.writeHead(200, {'Content-Type': type});
     res.end(rel === PAGE ? HEAD + buf.toString('utf8') + '</body></html>' : buf);
   });
-}).listen(PORT, () => console.log('listening on ' + PORT));
+}).listen(PORT, () => console.log('listening on ' + PORT + (USER && PASS ? ` · 로그인 설정됨 (아이디 ${USER.length}자, 비밀번호 ${PASS.length}자)` : ' · 비밀번호 미설정')));
