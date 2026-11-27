@@ -14,7 +14,7 @@ const PASS = clean(process.env.BASIC_AUTH_PASSWORD);
 // 구조: index.html(대시보드) · events.json(행사 목록) · events/<행사>/index.html · images/ · 엑셀
 
 const TYPES = {
-  '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8',
+  '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8', '.pdf': 'application/pdf',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp',
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 };
@@ -24,7 +24,7 @@ const PATTERNS = [
   /^index\.html$/, /^events\.json$/, /^shares\.json$/,
   new RegExp(`^events/${SLUG}/index\\.html$`),
   new RegExp(`^events/${SLUG}/images/(products/)?[\\w.-]+\\.(jpe?g|png|webp)$`),
-  new RegExp(`^events/${SLUG}/[^/]+\\.xlsx$`),
+  new RegExp(`^events/${SLUG}/[^/]+\\.(xlsx|pdf)$`),
 ];
 const allowed = rel => PATTERNS.some(p => p.test(rel));
 const isPage = rel => rel.endsWith('.html');
@@ -74,11 +74,13 @@ function excelInFiles(slug) {
   catch { return true; }
 }
 function listFiles(slug, withExcel) {
+  const docs = withExcel;  // 공문 PDF는 로그인 화면에서만 (공유 링크 제외)
   withExcel = withExcel && excelInFiles(slug);
   const base = path.join(ROOT, 'events', slug), out = [];
   const add = (rel, kind) => { try { const st = fs.statSync(path.join(base, rel)); if (st.isFile()) out.push({path: rel, name: path.basename(rel), size: st.size, kind}); } catch {} };
   const dir = d => { try { return fs.readdirSync(path.join(base, d)).sort(); } catch { return []; } };
   if (withExcel) dir('.').filter(f => /\.xlsx$/.test(f)).forEach(f => add(f, '엑셀'));
+  if (docs) dir('.').filter(f => /\.pdf$/i.test(f)).forEach(f => add(f, '공문'));
   dir('images').filter(f => /\.(jpe?g|png|webp)$/i.test(f)).forEach(f => add('images/' + f, /^lms/i.test(f) ? 'LMS컷' : '메인컷'));
   dir('images/products').filter(f => /\.(jpe?g|png|webp)$/i.test(f)).forEach(f => add('images/products/' + f, /^GOLF_/i.test(f) ? '골프화컷' : '상품컷'));
   return out;

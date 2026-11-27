@@ -132,6 +132,7 @@ td.sizes span b{color:var(--accent);font-weight:700}
 td.fthumb{width:56px;padding:4px 8px}
 td.fthumb img{display:block;width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#fff}
 td.fthumb span{display:grid;place-items:center;width:44px;height:44px;border-radius:6px;background:#1e7145;color:#fff;font-size:11px;font-weight:700}
+td.fthumb span.pdf{background:#b3261e}
 a.dl{display:inline-block;font-size:12.5px;font-weight:500;color:var(--accent);border:1px solid var(--line);border-radius:7px;padding:3px 10px;text-decoration:none;background:var(--surface)}
 a.dl:hover{border-color:var(--accent)}
 a.btn{text-decoration:none}
@@ -541,11 +542,11 @@ const tabs = (SHARED ? ['plan','items','summary','golf'] : ['plan','items','summ
 if (HOSTED) {
   const kb = n => n >= 1048576 ? (n/1048576).toFixed(1) + 'MB' : Math.round(n/1024) + 'KB';
   fetch('files.json', {cache:'no-store'}).then(r => { if (!r.ok) throw 0; return r.json(); }).then(list => {
-    const order = ['엑셀','메인컷','LMS컷','상품컷','골프화컷'];
+    const order = ['공문','엑셀','메인컷','LMS컷','상품컷','골프화컷'];
     list.sort((a,b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.name.localeCompare(b.name));
     const href = p => p.split('/').map(encodeURIComponent).join('/');
     $('t-files').innerHTML = '<thead><tr><th></th><th>구분</th><th>파일</th><th>크기</th><th></th></tr></thead><tbody>' + list.map(f =>
-      `<tr><td class="fthumb">${f.kind === '엑셀' ? '<span>XLSX</span>' : `<img src="${href(f.path)}" alt="" loading="lazy">`}</td><td class="c"><span class="pill">${esc(f.kind)}</span></td><td><a href="${href(f.path)}" target="_blank" rel="noopener">${esc(f.name)}</a></td><td class="num">${kb(f.size)}</td><td class="c"><a class="dl" href="${href(f.path)}?dl=1">받기</a></td></tr>`).join('') + '</tbody>';
+      `<tr><td class="fthumb">${f.kind === '엑셀' ? '<span>XLSX</span>' : f.kind === '공문' ? '<span class="pdf">PDF</span>' : `<img src="${href(f.path)}" alt="" loading="lazy">`}</td><td class="c"><span class="pill">${esc(f.kind)}</span></td><td><a href="${href(f.path)}" target="_blank" rel="noopener">${esc(f.name)}</a></td><td class="num">${kb(f.size)}</td><td class="c"><a class="dl" href="${href(f.path)}?dl=1">받기</a></td></tr>`).join('') + '</tbody>';
     const total = list.reduce((s,f)=>s+f.size,0), by = k => list.filter(f=>f.kind===k).length;
     $('f-sum').textContent = `${list.length}개 파일 · ${kb(total)}` + order.filter(by).map(k => ` · ${k} ${by(k)}`).join('');
   }).catch(() => { $('f-sum').textContent = '첨부파일 목록을 불러오지 못했습니다. 새로고침해 주세요.'; });
