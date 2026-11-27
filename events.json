@@ -48,6 +48,7 @@
     "target": 51470120,
     "excel": "롯데안산_12월행사_물량계획.xlsx",
     "cover": "images/main_02_men_800x800.jpg",
-    "updated": "2026-11-27"
+    "updated": "2026-11-27",
+    "filesExcel": false
   }
 ]

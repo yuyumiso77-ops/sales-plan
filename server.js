@@ -68,7 +68,13 @@ function send(res, file, rel) {
   });
 }
 // ---- 첨부파일 목록 · 다운로드 ----
+// events.json 에서 "filesExcel": false 인 행사는 첨부파일 목록·ZIP에서 엑셀 제외
+function excelInFiles(slug) {
+  try { const e = JSON.parse(fs.readFileSync(path.join(ROOT, 'events.json'), 'utf8')).find(x => x.slug === slug); return !(e && e.filesExcel === false); }
+  catch { return true; }
+}
 function listFiles(slug, withExcel) {
+  withExcel = withExcel && excelInFiles(slug);
   const base = path.join(ROOT, 'events', slug), out = [];
   const add = (rel, kind) => { try { const st = fs.statSync(path.join(base, rel)); if (st.isFile()) out.push({path: rel, name: path.basename(rel), size: st.size, kind}); } catch {} };
   const dir = d => { try { return fs.readdirSync(path.join(base, d)).sort(); } catch { return []; } };
