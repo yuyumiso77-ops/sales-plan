@@ -7,12 +7,47 @@
     "start": "2026-12-11",
     "end": "2026-12-20",
     "type": "이월·시즌오프 할인 팝업",
-    "apparel": { "styles": 230, "qty": 2574, "tag": 844032000, "sale": 320102200 },
-    "golf": { "models": 28, "qty": 403, "tag": 101430000, "sale": 71542000 },
+    "apparel": {
+      "styles": 230,
+      "qty": 2574,
+      "tag": 844032000,
+      "sale": 320102200
+    },
+    "golf": {
+      "models": 28,
+      "qty": 403,
+      "tag": 101430000,
+      "sale": 71542000
+    },
     "target": 95908980,
     "promo": "공동판촉 참여 (단일 60·100·200·300만원 이상 10% 사은)",
     "excel": "롯데잠실_12월행사_물량계획.xlsx",
     "cover": "images/main_01_women_800x800.jpg",
+    "updated": "2026-11-27"
+  },
+  {
+    "slug": "2026-12-lotte-ansan",
+    "title": "풋조이 12월 행사",
+    "store": "롯데백화점 안산점",
+    "place": "신관 5층 문화센터 앞",
+    "start": "2026-12-04",
+    "end": "2026-12-10",
+    "type": "이월·시즌오프 할인 행사",
+    "apparel": {
+      "styles": 178,
+      "qty": 1662,
+      "tag": 509726000,
+      "sale": 185808600
+    },
+    "golf": {
+      "models": 28,
+      "qty": 403,
+      "tag": 101430000,
+      "sale": 71542000
+    },
+    "target": null,
+    "excel": "롯데안산_12월행사_물량계획.xlsx",
+    "cover": "images/main_02_men_800x800.jpg",
     "updated": "2026-11-27"
   }
 ]

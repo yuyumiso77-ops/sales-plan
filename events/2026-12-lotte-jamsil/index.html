@@ -327,7 +327,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&
 const val = v => { const s = String(v ?? ''); const m = s.match(/^\[([^\]]*)\](.*)$/); return (m && !m[1].includes('풋조이')) ? `<span class="todo">${esc(m[1])}</span>${esc(m[2])}` : esc(s); };
 
 const T = {q:sum(D,'q'), tt:sum(D,'tt'), ts:sum(D,'ts'), st:sum(D,'st'), rt:sum(D,'rt')};
-const target = P['목표 매출'][0];
+const target = typeof P['목표 매출'][0] === 'number' ? P['목표 매출'][0] : 0;
 const GS = {q:sum(SH,'q'), tt:SH.reduce((s,x)=>s+x.tag*x.q,0), ts:SH.reduce((s,x)=>s+x.sale*x.q,0)};
 const sp = (l, v) => `<span class="kv2"><span>${l}</span><b>${v}</b></span>`;
 $('kpis').innerHTML = [
@@ -335,12 +335,12 @@ $('kpis').innerHTML = [
   ['전체 정상가', eok(T.tt + GS.tt), sp('의류', eok(T.tt)) + sp('골프화', eok(GS.tt))],
   ['전체 행사가', eok(T.ts + GS.ts), sp('의류', eok(T.ts)) + sp('골프화', eok(GS.ts))],
   ['평균 할인율', pct(1-(T.ts+GS.ts)/(T.tt+GS.tt)), sp('의류', pct(1-T.ts/T.tt)) + sp('골프화', pct(1-GS.ts/GS.tt))],
-  ['목표 매출', (target/1e4).toLocaleString('ko-KR',{maximumFractionDigits:0})+'만', sp('금액', fmt(target)+'원') + sp('기준', '의류')],
+  ['목표 매출', target ? (target/1e4).toLocaleString('ko-KR',{maximumFractionDigits:0})+'만' : '미정', target ? sp('금액', fmt(target)+'원') + sp('기준', '의류') : sp('상태', '입력 전')],
 ].map(([l,v,s])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
 
 const kv = (el, keys) => { $(el).innerHTML = keys.map(([k,label])=>{ const [v,n]=P[k]||['','']; return `<dt>${label||k}</dt><dd>${val(v)}${n?`<small>${esc(n)}</small>`:''}</dd>`; }).join(''); };
 kv('basic', [['행사명'],['기간'],['장소'],['행사 형태']]);
-$('basic').innerHTML += `<dt>규모 · 의류</dt><dd>${D.length}개 품번 · ${fmt(T.q)}장<small>매장재고 + 아울렛RT</small></dd><dt>규모 · 골프화</dt><dd>${new Set(SH.map(x=>x.model)).size}개 모델 · ${fmt(GS.q)}켤레<small>정상가 ${fmt(GS.tt)}원 → 행사가 ${fmt(GS.ts)}원</small></dd><dt>전체 행사가</dt><dd>${fmt(T.ts+GS.ts)}원<small>의류 + 골프화</small></dd><dt>목표 매출</dt><dd>${fmt(target)}원<small>${esc(P['목표 매출'][1]||'')}</small></dd>`;
+$('basic').innerHTML += `<dt>규모 · 의류</dt><dd>${D.length}개 품번 · ${fmt(T.q)}장<small>매장재고 + 아울렛RT</small></dd><dt>규모 · 골프화</dt><dd>${new Set(SH.map(x=>x.model)).size}개 모델 · ${fmt(GS.q)}켤레<small>정상가 ${fmt(GS.tt)}원 → 행사가 ${fmt(GS.ts)}원</small></dd><dt>전체 행사가</dt><dd>${fmt(T.ts+GS.ts)}원<small>의류 + 골프화</small></dd><dt>목표 매출</dt><dd>${target ? fmt(target)+'원' : '미정'}<small>${esc(P['목표 매출'][1]||'')}</small></dd>`;
 
 const grp = [['2025년 F/W',x=>x.y===2025,.6],['2024년 F/W',x=>x.y===2024,.5],['2020~2023년 F/W',x=>x.y<=2023,.7]];
 $('t-year').innerHTML = '<thead><tr><th>구분</th><th>할인율</th><th>품번</th><th>수량</th><th>정상가합계</th><th>행사가합계</th></tr></thead><tbody>' +
@@ -507,7 +507,7 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
 
   async function start(){
     render();
-    const useStatic = msg => { ATT = STATIC_PROD.slice(); render(); say(msg); };
+    const useStatic = msg => { ATT = STATIC_PROD.filter(a => REP.includes(a.code) || GREP.some(([,m]) => String(m) === a.code)); render(); say(msg); };
     if (!window.claude || !window.claude.use) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 사진 첨부는 claude.ai 페이지에서 할 수 있습니다.'); return; }
     const db = await window.claude.use('db');
     if (!db) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 로그인하면 첨부한 사진도 볼 수 있습니다.'); return; }
