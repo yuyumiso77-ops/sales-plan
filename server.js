@@ -21,7 +21,7 @@ const TYPES = {
 // 공개할 파일만 허용 (서버 코드 등은 내보내지 않음)
 const SLUG = '[a-z0-9][a-z0-9-]*';
 const PATTERNS = [
-  /^index\.html$/, /^events\.json$/,
+  /^index\.html$/, /^events\.json$/, /^shares\.json$/,
   new RegExp(`^events/${SLUG}/index\\.html$`),
   new RegExp(`^events/${SLUG}/images/(products/)?[\\w.-]+\\.(jpe?g|png|webp)$`),
   new RegExp(`^events/${SLUG}/[^/]+\\.xlsx$`),
@@ -48,7 +48,7 @@ const HEAD = '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
   '<meta name="robots" content="noindex,nofollow">' +
   '<style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body>';
 
-// 공유 링크: /s/<토큰>/ → 해당 행사 페이지만 로그인 없이 보기 (토큰 목록: shares.json, 외부로 내보내지 않음)
+// 공유 링크: /s/<토큰>/ → 해당 행사 페이지만 로그인 없이 보기 (토큰 목록: shares.json, 로그인한 대시보드에서만 열림)
 function shareTarget(token) {
   try {
     const list = JSON.parse(fs.readFileSync(path.join(ROOT, 'shares.json'), 'utf8'));

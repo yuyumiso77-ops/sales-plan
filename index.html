@@ -39,8 +39,15 @@ h1{font-family:var(--f-display);font-size:clamp(22px,3.4vw,32px);font-weight:700
 .seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .list{display:grid;gap:14px;padding-bottom:48px}
-.card{display:grid;grid-template-columns:132px minmax(0,1fr) auto;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;color:inherit;text-decoration:none}
+.card{position:relative;display:grid;grid-template-columns:132px minmax(0,1fr) auto;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
 .card:hover{border-color:var(--accent)}
+.card h3 a{color:inherit;text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0;border-radius:12px}
+.share{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:flex-end}
+.share button{font:inherit;font-size:12.5px;font-weight:500;background:var(--tint);color:var(--accent);border:1px solid var(--line);border-radius:7px;padding:4px 10px;cursor:pointer}
+.share button:hover{border-color:var(--accent)}
+.share .msg{font-size:12px;color:var(--live)}
+.share input{font:inherit;font-size:12px;width:220px;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--fg)}
 .card img{width:132px;height:132px;object-fit:cover;border-radius:8px;background:var(--tint);display:block}
 .card .ph{width:132px;height:132px;border-radius:8px;background:var(--tint)}
 .card .main{min-width:0}
@@ -96,17 +103,27 @@ function status(e){
   if (today > t) return {k:'done', label:'종료', d:'종료'};
   const n = Math.round((t - today) / 864e5); return {k:'live', label:'진행 중', d: n ? `종료 D-${n}` : '오늘 종료'};
 }
-let EV = [], filt = '';
+let EV = [], SHARES = [], filt = '';
+const shareUrl = token => location.origin + '/s/' + token + '/';
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-share]'); if (!b) return;
+  ev.preventDefault();
+  const url = shareUrl(b.dataset.share), box = b.parentElement;
+  const done = m => { box.querySelector('.msg')?.remove(); const s = document.createElement('span'); s.className = 'msg'; s.setAttribute('role','status'); s.textContent = m; box.append(s); };
+  const fallback = () => { box.querySelector('input')?.remove(); const i = document.createElement('input'); i.readOnly = true; i.value = url; i.setAttribute('aria-label','공유 링크'); box.append(i); i.select(); done('선택됨 · Ctrl+C로 복사'); };
+  try { navigator.clipboard.writeText(url).then(() => done('복사했습니다'), fallback); } catch (e) { fallback(); }
+});
 function render(){
   const a = EV.filter(e => !filt || e.st.k === filt);
   $('list').innerHTML = a.length ? a.map(e => {
     const qty = (e.apparel?.qty||0) + (e.golf?.qty||0), sale = (e.apparel?.sale||0) + (e.golf?.sale||0), tag = (e.apparel?.tag||0) + (e.golf?.tag||0);
     const base = 'events/' + encodeURIComponent(e.slug) + '/';
-    return `<a class="card" href="${base}">
+    const sh = SHARES.filter(s => s.slug === e.slug && s.active !== false);
+    return `<div class="card">
       ${e.cover ? `<img src="${base}${esc(e.cover)}" alt="" loading="lazy">` : '<div class="ph"></div>'}
       <div class="main">
         <div class="meta">${esc(e.store)} · ${esc(e.place||'')}</div>
-        <h3>${esc(e.title)}</h3>
+        <h3><a href="${base}">${esc(e.title)}</a></h3>
         <div class="meta">${dstr(day(e.start))} ~ ${dstr(day(e.end))} · ${esc(e.type||'')}</div>
         <div class="stats">
           ${e.apparel ? `<div><div class="l">의류</div><div class="v">${fmt(e.apparel.qty)}장</div></div>` : ''}
@@ -120,8 +137,9 @@ function render(){
         <span class="pill ${e.st.k}">${e.st.label}</span>
         <span class="dday">${e.st.d}</span>
         <span class="go">상세 보기 →</span>
+        ${sh.length ? `<div class="share">${sh.map(s => `<button type="button" data-share="${esc(s.token)}">공유 링크 복사</button>`).join('')}</div>` : ''}
       </div>
-    </a>`;
+    </div>`;
   }).join('') : '<p class="empty">해당하는 행사가 없습니다.</p>';
 }
 function kpis(){
@@ -138,6 +156,7 @@ function kpis(){
 document.querySelectorAll('[data-st]').forEach(b => b.addEventListener('click', () => {
   filt = b.dataset.st; document.querySelectorAll('[data-st]').forEach(x => x.setAttribute('aria-pressed', x === b)); render();
 }));
+fetch('shares.json', {cache:'no-store'}).then(r => r.ok ? r.json() : []).catch(() => []).then(s => { SHARES = Array.isArray(s) ? s : []; render(); });
 fetch('events.json', {cache:'no-store'}).then(r => { if (!r.ok) throw 0; return r.json(); }).then(list => {
   const rank = {live:0, soon:1, done:2};
   EV = list.map(e => ({...e, st: status(e)})).sort((a,b) => rank[a.st.k]-rank[b.st.k] || (a.st.k==='done' ? b.start.localeCompare(a.start) : a.start.localeCompare(b.start)));
