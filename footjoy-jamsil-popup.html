@@ -326,18 +326,19 @@ const PLC = Object.fromEntries(MASTER.map(m=>[String(m.plc), m]));
 const pname = code => { const m = MASTER.find(x=>x.code===code); return m ? m.name : ''; };
 const pitem = code => { const m = MASTER.find(x=>x.code===code); return m ? (m.item2 || m.item1) : ''; };
 const GREP = [['M', 55396], ['W', 90929]];
+const STATIC_PROD = [{"kind": "product", "code": "FMJMD4407", "color": "BROWN", "file": "FMJMD4407_BROWN_800x800.jpg", "url": "images/products/FMJMD4407_BROWN_800x800.jpg"}, {"kind": "product", "code": "FMJMD4407", "color": "BLACK", "file": "FMJMD4407_BLACK_800x800.jpg", "url": "images/products/FMJMD4407_BLACK_800x800.jpg"}, {"kind": "product", "code": "FMJWK7302", "color": "INK", "file": "FMJWK7302_INK_800x800.jpg", "url": "images/products/FMJWK7302_INK_800x800.jpg"}, {"kind": "product", "code": "FMJWK7302", "color": "BLACK", "file": "FMJWK7302_BLACK_800x800.jpg", "url": "images/products/FMJWK7302_BLACK_800x800.jpg"}, {"kind": "product", "code": "FMJWK8315", "color": "STONE", "file": "FMJWK8315_STONE_800x800.jpg", "url": "images/products/FMJWK8315_STONE_800x800.jpg"}, {"kind": "product", "code": "FMJWK8315", "color": "BLACK", "file": "FMJWK8315_BLACK_800x800.jpg", "url": "images/products/FMJWK8315_BLACK_800x800.jpg"}, {"kind": "product", "code": "FMJWP7604", "color": "SAND", "file": "FMJWP7604_SAND_800x800.jpg", "url": "images/products/FMJWP7604_SAND_800x800.jpg"}, {"kind": "product", "code": "FMJWP7604", "color": "CHARCOAL", "file": "FMJWP7604_CHARCOAL_800x800.jpg", "url": "images/products/FMJWP7604_CHARCOAL_800x800.jpg"}, {"kind": "product", "code": "FMJMD4410", "color": "BLACK", "file": "FMJMD4410_BLACK_800x800.jpg", "url": "images/products/FMJMD4410_BLACK_800x800.jpg"}, {"kind": "product", "code": "FMJMD4410", "color": "STEEL", "file": "FMJMD4410_STEEL_800x800.jpg", "url": "images/products/FMJMD4410_STEEL_800x800.jpg"}, {"kind": "product", "code": "55396", "color": "WHITE / PATTERN", "file": "GOLF_55396_WHITE-PATTERN_800x800.jpg", "url": "images/products/GOLF_55396_WHITE-PATTERN_800x800.jpg"}, {"kind": "product", "code": "90929", "color": "WHITE / BLACK", "file": "GOLF_90929_WHITE-BLACK_800x800.jpg", "url": "images/products/GOLF_90929_WHITE-BLACK_800x800.jpg"}];
 let ATT = [];
 function renderGRep(){
   const rows = GREP.map(([sx, model]) => { const x = SH.filter(s => s.model === model); return x.length ? {sx, model, code: x[0].code, name: x[0].name, color: x[0].color, tag: x[0].tag, sale: x[0].sale, q: sum(x,'q')} : null; }).filter(Boolean);
   $('t-grep').innerHTML = '<thead><tr><th>사진</th><th>성별</th><th>모델</th><th>상품코드</th><th>상품명</th><th>색상</th><th>정상가</th><th>할인율</th><th>행사가</th><th>수량</th></tr></thead><tbody>' +
     rows.map(r => { const a = ATT.find(x => x.kind==='product' && x.code === String(r.model));
-      return `<tr><td class="chips"><figure class="chip">${a ? `<img src="/_blob/${esc(a.asset)}" alt="${r.model} 골프화 사진">` : '<span aria-label="사진 없음"></span>'}</figure></td><td class="c">${r.sx}</td><td class="code">${r.model}</td><td class="code">${esc(r.code)}</td><td>${esc(r.name)}</td><td>${esc(r.color)}</td><td class="num">${fmt(r.tag)}</td><td class="c"><span class="pill">${pct(1-r.sale/r.tag)}</span></td><td class="num"><b>${fmt(r.sale)}</b></td><td class="num">${r.q}</td></tr>`; }).join('') + '</tbody>';
+      return `<tr><td class="chips"><figure class="chip">${a ? `<img src="${esc(a.url || "/_blob/" + a.asset)}" alt="${r.model} 골프화 사진">` : '<span aria-label="사진 없음"></span>'}</figure></td><td class="c">${r.sx}</td><td class="code">${r.model}</td><td class="code">${esc(r.code)}</td><td>${esc(r.name)}</td><td>${esc(r.color)}</td><td class="num">${fmt(r.tag)}</td><td class="c"><span class="pill">${pct(1-r.sale/r.tag)}</span></td><td class="num"><b>${fmt(r.sale)}</b></td><td class="num">${r.q}</td></tr>`; }).join('') + '</tbody>';
 }
 function renderRep(){
   if ($('t-grep')) renderGRep();
   const chips = code => MASTER.filter(m=>m.code===code).map(m=>{
     const a = ATT.find(x=>x.kind==='product' && x.code===code && x.color===m.color);
-    return `<figure class="chip">${a ? `<img src="/_blob/${esc(a.asset)}" alt="${esc(code)} ${esc(m.color)} 상품컷">` : '<span aria-label="사진 없음"></span>'}<figcaption>${esc(m.color)}</figcaption></figure>`;
+    return `<figure class="chip">${a ? `<img src="${esc(a.url || "/_blob/" + a.asset)}" alt="${esc(code)} ${esc(m.color)} 상품컷">` : '<span aria-label="사진 없음"></span>'}<figcaption>${esc(m.color)}</figcaption></figure>`;
   }).join('');
   $('t-rep').innerHTML = '<thead><tr><th>상품코드</th><th>상품명</th><th>품목</th><th>컬러별 사진</th><th>정상가</th><th>할인율</th><th>행사가</th><th>수량</th></tr></thead><tbody>' +
     reps.map(x=>`<tr><td class="code">${x.code}</td><td>${esc(pname(x.code))}</td><td>${esc(pitem(x.code))}</td><td class="chips">${chips(x.code)}</td><td class="num">${fmt(x.tag)}</td><td class="c"><span class="pill">${pct(x.rate)}</span></td><td class="num"><b>${fmt(x.sale)}</b></td><td class="num">${x.q}</td></tr>`).join('') + '</tbody>';
@@ -480,9 +481,10 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
 
   async function start(){
     render();
-    if (!window.claude || !window.claude.use) { say('첨부한 사진은 claude.ai에서 이 페이지를 열면 보입니다.'); return; }
+    const useStatic = msg => { ATT = STATIC_PROD.slice(); render(); say(msg); };
+    if (!window.claude || !window.claude.use) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 사진 첨부는 claude.ai 페이지에서 할 수 있습니다.'); return; }
     const db = await window.claude.use('db');
-    if (!db) { say('로그인하면 첨부한 사진을 볼 수 있습니다.'); return; }
+    if (!db) { useStatic('대표상품 사진은 저장된 파일로 보여줍니다. 로그인하면 첨부한 사진도 볼 수 있습니다.'); return; }
     col = db.collection('images');
     assets = await window.claude.use('assets');
     canDel = !!assets;

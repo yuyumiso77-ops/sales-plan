@@ -17,7 +17,7 @@ const TYPES = {
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 };
 // 공개할 파일만 허용 (서버 코드 등은 내보내지 않음)
-const allowed = rel => rel === PAGE || /^images\/[\w.-]+\.(jpe?g|png|webp)$/.test(rel) || /^[^/]+\.xlsx$/.test(rel);
+const allowed = rel => rel === PAGE || /^images\/(products\/)?[\w.-]+\.(jpe?g|png|webp)$/.test(rel) || /^[^/]+\.xlsx$/.test(rel);
 
 const same = (a, b) => {
   const x = Buffer.from(a), y = Buffer.from(b);
