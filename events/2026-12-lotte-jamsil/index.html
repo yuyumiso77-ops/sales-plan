@@ -125,6 +125,12 @@ tr.grp td{background:var(--tint)!important;font-weight:700;color:var(--fg)}
 td.sizes{white-space:normal;min-width:220px}
 td.sizes span{display:inline-block;font-size:11.5px;border:1px solid var(--line);border-radius:5px;padding:0 5px;margin:1px 2px 1px 0;font-variant-numeric:tabular-nums;background:var(--surface)}
 td.sizes span b{color:var(--accent);font-weight:700}
+td.fthumb{width:56px;padding:4px 8px}
+td.fthumb img{display:block;width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#fff}
+td.fthumb span{display:grid;place-items:center;width:44px;height:44px;border-radius:6px;background:#1e7145;color:#fff;font-size:11px;font-weight:700}
+a.dl{display:inline-block;font-size:12.5px;font-weight:500;color:var(--accent);border:1px solid var(--line);border-radius:7px;padding:3px 10px;text-decoration:none;background:var(--surface)}
+a.dl:hover{border-color:var(--accent)}
+a.btn{text-decoration:none}
 .note{color:var(--muted);font-size:12.5px;margin:8px 2px 0}
 .check{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;line-height:18px;text-align:center}
 @media (prefers-reduced-motion:no-preference){nav.tabs a{transition:color .15s,border-color .15s}}
@@ -144,6 +150,7 @@ td.sizes span b{color:var(--accent);font-weight:700}
     <a href="#items" data-tab="items">물량계획</a>
     <a href="#summary" data-tab="summary">요약</a>
     <a href="#golf" data-tab="golf">골프화</a>
+    <a href="#files" data-tab="files" hidden>첨부파일</a>
     <a href="#mail" data-tab="mail">회신 메일</a>
   </nav>
 
@@ -234,6 +241,12 @@ td.sizes span b{color:var(--accent);font-weight:700}
     </div>
     <div class="panel tbl"><table id="t-golf"></table></div>
     <p class="note">할인가는 균일가입니다. 사이즈 칸은 사이즈별 배분 수량이고, 엑셀의 골프화_물량계획 · 골프화_원본 시트와 같은 내용입니다.</p>
+  </section>
+
+  <section id="v-files" hidden>
+    <div class="mailbar"><p class="note" id="f-sum">첨부파일 목록을 불러오는 중입니다.</p><a class="btn" id="f-zip" href="download.zip" download>전체 받기 (ZIP)</a></div>
+    <div class="panel tbl"><table id="t-files"></table></div>
+    <p class="note">파일 이름을 누르면 새 창에서 열리고, "받기"를 누르면 내려받습니다.</p>
   </section>
 
   <section id="v-mail" hidden>
@@ -517,7 +530,22 @@ $('t-sb').innerHTML = '<thead><tr><th>성별</th><th>복종</th><th>품번</th><
 if (location.pathname.startsWith('/events/')) $('back').hidden = false;
 const SHARED = location.pathname.startsWith('/s/');
 if (SHARED) { document.querySelector('[data-tab="mail"]').remove(); $('v-mail').remove(); }
-const tabs = SHARED ? ['plan','items','summary','golf'] : ['plan','items','summary','golf','mail'];
+const HOSTED = location.pathname.startsWith('/events/') || SHARED;
+if (!HOSTED) { document.querySelector('[data-tab="files"]').remove(); $('v-files').remove(); }
+else { document.querySelector('[data-tab="files"]').hidden = false; }
+const tabs = (SHARED ? ['plan','items','summary','golf'] : ['plan','items','summary','golf','mail']).concat(HOSTED ? ['files'] : []);
+if (HOSTED) {
+  const kb = n => n >= 1048576 ? (n/1048576).toFixed(1) + 'MB' : Math.round(n/1024) + 'KB';
+  fetch('files.json', {cache:'no-store'}).then(r => { if (!r.ok) throw 0; return r.json(); }).then(list => {
+    const order = ['엑셀','메인컷','LMS컷','상품컷','골프화컷'];
+    list.sort((a,b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.name.localeCompare(b.name));
+    const href = p => p.split('/').map(encodeURIComponent).join('/');
+    $('t-files').innerHTML = '<thead><tr><th></th><th>구분</th><th>파일</th><th>크기</th><th></th></tr></thead><tbody>' + list.map(f =>
+      `<tr><td class="fthumb">${f.kind === '엑셀' ? '<span>XLSX</span>' : `<img src="${href(f.path)}" alt="" loading="lazy">`}</td><td class="c"><span class="pill">${esc(f.kind)}</span></td><td><a href="${href(f.path)}" target="_blank" rel="noopener">${esc(f.name)}</a></td><td class="num">${kb(f.size)}</td><td class="c"><a class="dl" href="${href(f.path)}?dl=1">받기</a></td></tr>`).join('') + '</tbody>';
+    const total = list.reduce((s,f)=>s+f.size,0), by = k => list.filter(f=>f.kind===k).length;
+    $('f-sum').textContent = `${list.length}개 파일 · ${kb(total)}` + order.filter(by).map(k => ` · ${k} ${by(k)}`).join('');
+  }).catch(() => { $('f-sum').textContent = '첨부파일 목록을 불러오지 못했습니다. 새로고침해 주세요.'; });
+}
 /* 골프화 */
 (function(){
   const models = []; const by = {};

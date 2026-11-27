@@ -46,6 +46,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .share{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:flex-end}
 .share button{font:inherit;font-size:12.5px;font-weight:500;background:var(--tint);color:var(--accent);border:1px solid var(--line);border-radius:7px;padding:4px 10px;cursor:pointer}
 .share button:hover{border-color:var(--accent)}
+.share a.fl{font-size:12.5px;font-weight:500;color:var(--accent);border:1px solid var(--line);border-radius:7px;padding:4px 10px;text-decoration:none;background:var(--surface)}
+.share a.fl:hover{border-color:var(--accent)}
 .share .msg{font-size:12px;color:var(--live)}
 .share input{font:inherit;font-size:12px;width:220px;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--fg)}
 .card img{width:132px;height:132px;object-fit:cover;border-radius:8px;background:var(--tint);display:block}
@@ -137,7 +139,11 @@ function render(){
         <span class="pill ${e.st.k}">${e.st.label}</span>
         <span class="dday">${e.st.d}</span>
         <span class="go">상세 보기 →</span>
-        ${sh.length ? `<div class="share">${sh.map(s => `<button type="button" data-share="${esc(s.token)}">공유 링크 복사</button>`).join('')}</div>` : ''}
+        <div class="share">
+          <a class="fl" href="${base}download.zip" download>자료 전체 받기</a>
+          ${e.excel ? `<a class="fl" href="${base}${e.excel.split('/').map(encodeURIComponent).join('/')}?dl=1">엑셀</a>` : ''}
+          ${sh.map(s => `<button type="button" data-share="${esc(s.token)}">공유 링크 복사</button>`).join('')}
+        </div>
       </div>
     </div>`;
   }).join('') : '<p class="empty">해당하는 행사가 없습니다.</p>';
