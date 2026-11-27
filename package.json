@@ -1,0 +1,7 @@
+{
+  "name": "footjoy-jamsil-popup",
+  "private": true,
+  "description": "풋조이 롯데 잠실점 12월 팝업 페이지 (Railway 배포용)",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
